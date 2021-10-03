@@ -1,7 +1,12 @@
 <h1>{{title}}</h1>
 
+
+
 <div class='data__row__display'>
-    <app-heroes></app-heroes>
+    <nav class='centered__log'>
+        <a routerLink="/heroes">HEROES</a>
+    </nav>
+    <router-outlet></router-outlet>
     <app-messages class='centered__log'></app-messages>
 
 </div>
