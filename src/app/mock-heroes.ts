@@ -1,5 +1,7 @@
 import { Hero } from "./hero";
 
+//this were the heroes who conquered the Neoland's Full Stack Developer Bootcamp on July 2021 :D
+
 export const HEROES: Hero[] = [
     { id: 11, name: 'Jean' },
     { id: 12, name: 'Veka' },

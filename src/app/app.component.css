@@ -1,0 +1,9 @@
+.data__row__display{
+    display: flex;
+    flex-direction: row;
+}
+.centered__log{
+    width: 100%;
+    margin: auto;
+    text-align: center;
+}
