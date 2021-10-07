@@ -3,6 +3,9 @@ import { Hero } from './hero';
 import { HEROES } from './mock-heroes';
 import { Observable, of } from 'rxjs';
 import { MessageService } from './message.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { catchError, map, tap } from 'rxjs/operators'
+
 
 @Injectable({
   //Este es el provider
@@ -10,23 +13,109 @@ import { MessageService } from './message.service';
 })
 export class HeroService {
 
-  constructor(private messageService: MessageService) { }
+  constructor(
+    private messageService: MessageService,
+    private http: HttpClient
+  ) { }
+
+
+
+  private handleError<T>(operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+
+      console.error(error);
+
+      this.log(`${operation} failed: ${error.message}`);
+
+      return of(result as T);
+
+    }
+  }
+
+  private log(message: string) {
+    this.messageService.add(`HeroService: ${message}`);
+  }
+
+  private heroesUrl = 'api/heroes';
 
   getHeroes(): Observable<Hero[]> {
-    const heroes = of(HEROES);
-    this.messageService.add('HeroService: fetched heroes');
-    return heroes;
+
+
+    return this.http.get<Hero[]>(this.heroesUrl)
+      .pipe(
+        tap(_ => this.log('fetched heroes')),
+        catchError(this.handleError<Hero[]>('getHeroes', []))
+      );
+
   }
+  //HTTP CRUD OPERATIONS WITH ANGULAR:
+
+
+
+  //-----------------PUT METHOD HTTP REQUEST -------------
+  /**
+   * The HttpClient.put() method takes three parameters:
+
+          the URL
+          the data to update (the modified hero in this case)
+          options
+   */
+  httpOptions = {
+    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  }
+  updateHero(hero: Hero): Observable<any> {
+    return this.http.put(this.heroesUrl, hero, this.httpOptions)
+      .pipe(
+        tap(_ => this.log(`Updated hero id = ${hero.id}`)),
+        catchError(this.handleError<any>('updateHero'))
+      )
+  }
+  //-------------------------END---------------------------
+  //-----------------GET METHOD HTTP REQUEST -------------
   getHero(id: number): Observable<Hero> {
 
-    const hero = HEROES.find(h => h.id === id)!;
-    const heroTester = HEROES.find(h => h.id === id);
+    const url = `${this.heroesUrl}/${id}`;
 
-    console.log(`function with ! ${JSON.stringify(hero)}`);
-    console.log(`function without ! ${JSON.stringify(heroTester)}`);
+    return this.http.get<Hero>(url).pipe(
+      tap(_ => this.log(`fetched hero id = ${id}`)),
+      catchError(this.handleError<Hero>(`getHero id = ${id}`))
+    )
+  }
+  //-------------------------END---------------------------
+  //-----------------POST METHOD HTTP REQUEST -------------
+  addHero(hero: Hero): Observable<Hero> {
 
-    this.messageService.add(`HeroService: fetched hero id=${id}`);
+    return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions)
+      .pipe(
+        tap((newHero: Hero) => this.log(`added hero w/ id = ${newHero.id}`)),
+        catchError(this.handleError<Hero>('addHero'))
+      )
 
-    return of(hero);
+  }
+  //-------------------------END---------------------------
+  //-----------------DELETE METHOD HTTP REQUEST -------------
+
+  deleteHero(id: number): Observable<Hero> {
+    const url = `${this.heroesUrl}/${id}`;
+
+    return this.http.delete<Hero>(url, this.httpOptions)
+      .pipe(
+        tap(_ => this.log(`deleted hero id= ${id}`)),
+        catchError(this.handleError<Hero>('deleteHero'))
+      )
+  }
+
+  searchHeroes(term: string): Observable<Hero[]> {
+    if (!term.trim()) {
+      return of([])
+    }
+    return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`)
+      .pipe(
+        tap(x => x.length ?
+          this.log(`found heroes matching "${term}"`) :
+          this.log(`no heroes matching "${term}"`),
+          catchError(this.handleError<Hero[]>(`searchHeroes`, []))
+        )
+      )
   }
 }
